@@ -1,0 +1,352 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3x Smart Calculator</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #111;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+        }
+
+        /* Header Styles */
+        header {
+            padding: 1.5rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: normal;
+        }
+
+        /* Main Calculator Styles */
+        main {
+            max-width: 320px;
+            margin: 0 auto;
+            padding: 1rem;
+            width: 100%;
+        }
+
+        .calculator {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Display Styles */
+        .display {
+            padding: 1.5rem 1rem;
+            text-align: right;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: monospace;
+            border-bottom: 1px solid #333;
+        }
+
+        .input {
+            font-size: 1.1rem;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+            color: #aaa;
+            min-height: 1.5rem;
+        }
+
+        .output {
+            font-size: 1.8rem;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+            min-height: 2.5rem;
+        }
+
+        .error {
+            color: #ff5555;
+        }
+
+        /* Button Grid Styles */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background-color: #333;
+        }
+
+        .scientific-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1px;
+            background-color: #333;
+        }
+
+        button {
+            border: none;
+            outline: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            background-color: #222;
+            color: #eee;
+            transition: none;
+        }
+
+        button:active {
+            background-color: #333;
+        }
+
+        button:focus-visible {
+            outline: 2px solid #555;
+            outline-offset: -2px;
+        }
+
+        button.operator {
+            background-color: #2a2a2a;
+        }
+
+        button.equals {
+            background-color: #333;
+            grid-column: span 2;
+        }
+
+        button.clear, button.delete {
+            background-color: #2a2a2a;
+        }
+
+        button.scientific {
+            background-color: #252525;
+            font-size: 0.9rem;
+        }
+
+        /* Footer Styles */
+        footer {
+            text-align: center;
+            padding: 1rem;
+            margin-top: auto;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 400px) {
+            main {
+                padding: 0.5rem;
+            }
+
+            button {
+                padding: 0.8rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>3x Smart Calculator</h1>
+    </header>
+
+    <main>
+        <div class="calculator">
+            <div class="display">
+                <div class="input" id="input"></div>
+                <div class="output" id="output">0</div>
+            </div>
+
+            <div class="scientific-buttons">
+                <button class="scientific" data-value="sin(">sin</button>
+                <button class="scientific" data-value="cos(">cos</button>
+                <button class="scientific" data-value="tan(">tan</button>
+                <button class="scientific" data-value="log(">log</button>
+                <button class="scientific" data-value="sqrt(">√</button>
+                <button class="scientific" data-value="(">(</button>
+                <button class="scientific" data-value=")">)</button>
+                <button class="scientific" data-value="Math.PI">π</button>
+                <button class="scientific" data-value="Math.E">e</button>
+                <button class="scientific" data-value="**2">x²</button>
+            </div>
+
+            <div class="buttons">
+                <button class="clear" data-value="AC">AC</button>
+                <button class="delete" data-value="DEL">DEL</button>
+                <button class="operator" data-value="%">%</button>
+                <button class="operator" data-value="/">/</button>
+                <button data-value="7">7</button>
+                <button data-value="8">8</button>
+                <button data-value="9">9</button>
+                <button class="operator" data-value="*">×</button>
+                <button data-value="4">4</button>
+                <button data-value="5">5</button>
+                <button data-value="6">6</button>
+                <button class="operator" data-value="-">-</button>
+                <button data-value="1">1</button>
+                <button data-value="2">2</button>
+                <button data-value="3">3</button>
+                <button class="operator" data-value="+">+</button>
+                <button data-value="0">0</button>
+                <button data-value=".">.</button>
+                <button class="equals" data-value="=">=</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        &copy; <span id="year"></span> 3x Smart Calculator
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const inputDisplay = document.getElementById('input');
+            const outputDisplay = document.getElementById('output');
+            const buttons = document.querySelectorAll('button');
+            const yearSpan = document.getElementById('year');
+
+            // Calculator state
+            let currentInput = '';
+            let currentOutput = '0';
+            let lastCalculation = '';
+
+            // Initialize
+            updateDisplay();
+            yearSpan.textContent = new Date().getFullYear();
+
+            // Button click handler
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const value = button.getAttribute('data-value');
+
+                    switch (value) {
+                        case 'AC':
+                            clearAll();
+                            break;
+                        case 'DEL':
+                            deleteLastChar();
+                            break;
+                        case '=':
+                            calculate();
+                            break;
+                        default:
+                            appendInput(value);
+                            break;
+                    }
+
+                    updateDisplay();
+                });
+            });
+
+            // Keyboard support
+            document.addEventListener('keydown', (e) => {
+                const key = e.key;
+                
+                // Prevent default for calculator keys
+                if (/[0-9+\-*/.%=()]|Backspace|Enter|Delete|Escape/.test(key)) {
+                    e.preventDefault();
+                }
+
+                if (key === 'Enter') {
+                    calculate();
+                } else if (key === 'Backspace') {
+                    deleteLastChar();
+                } else if (key === 'Delete' || key === 'Escape') {
+                    clearAll();
+                } else if (/[0-9+\-*/.%=()]/.test(key)) {
+                    appendInput(key);
+                }
+
+                updateDisplay();
+            });
+
+            // Calculator functions
+            function appendInput(value) {
+                if (value === 'Math.PI') {
+                    currentInput += Math.PI;
+                } else if (value === 'Math.E') {
+                    currentInput += Math.E;
+                } else {
+                    currentInput += value;
+                }
+            }
+
+            function deleteLastChar() {
+                currentInput = currentInput.slice(0, -1);
+            }
+
+            function clearAll() {
+                currentInput = '';
+                currentOutput = '0';
+            }
+
+            function calculate() {
+                try {
+                    if (!currentInput) {
+                        if (lastCalculation) {
+                            currentInput = lastCalculation;
+                        } else {
+                            return;
+                        }
+                    }
+
+                    // Convert trigonometric functions to work with degrees
+                    let expression = currentInput
+                        .replace(/sin\(/g, 'Math.sin(Math.PI/180*')
+                        .replace(/cos\(/g, 'Math.cos(Math.PI/180*')
+                        .replace(/tan\(/g, 'Math.tan(Math.PI/180*')
+                        .replace(/log\(/g, 'Math.log10(')
+                        .replace(/sqrt\(/g, 'Math.sqrt(')
+                        .replace(/\*\*2/g, '**2');
+
+                    // Evaluate the expression
+                    const result = eval(expression);
+                    
+                    // Format the result
+                    if (Number.isNaN(result) || !Number.isFinite(result)) {
+                        throw new Error('Invalid result');
+                    }
+                    
+                    currentOutput = Number.isInteger(result) ? 
+                        result.toString() : 
+                        parseFloat(result.toFixed(8)).toString();
+                    
+                    // Store for potential reuse
+                    lastCalculation = currentOutput;
+                    
+                    // Prepare for next calculation
+                    currentInput = '';
+                } catch (error) {
+                    currentOutput = 'Error';
+                    outputDisplay.classList.add('error');
+                    setTimeout(() => {
+                        outputDisplay.classList.remove('error');
+                    }, 1000);
+                }
+            }
+
+            function updateDisplay() {
+                inputDisplay.textContent = currentInput;
+                outputDisplay.textContent = currentOutput;
+                
+                // Auto-scroll to end
+                inputDisplay.scrollLeft = inputDisplay.scrollWidth;
+                outputDisplay.scrollLeft = outputDisplay.scrollWidth;
+            }
+        });
+    </script>
+</body>
+</html>
